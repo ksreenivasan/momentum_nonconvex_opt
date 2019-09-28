@@ -1,0 +1,3 @@
+
+x_0 = np.array([-15.555481940982094, -16.884107263958597])
+x_opt, f_opt, results_df = heavy_ball_griewank(x_0, alpha=0.01, beta=0.9, gamma=500, use_ebls=True)
