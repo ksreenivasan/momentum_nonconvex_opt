@@ -1,4 +1,4 @@
-%matplotlib inline
+# %matplotlib inline
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -50,7 +50,7 @@ def steepest_descent_griewank(x0, alpha=0.01, epsilon=1e-5, n_iter=10000, debug=
     x_vals = []
     obj_vals = []
     grad_vals = []
-    
+
     n = len(x0)
     x_curr = x0
     for i in range(n_iter):
@@ -59,13 +59,13 @@ def steepest_descent_griewank(x0, alpha=0.01, epsilon=1e-5, n_iter=10000, debug=
             print("Iteration: ", i)
             print(x_curr, griewank(x_curr, gamma))
             print("------------------------")
-        
+
         grad = grad_griewank(x_curr, gamma)
-        
+
         x_vals.append(x_curr)
         obj_vals.append(griewank(x_curr, gamma))
         grad_vals.append(grad)
-        
+
         if grad_is_approx_zero(grad, epsilon):
             if debug:
                 print("Solution found!", x_curr, griewank(x_curr, gamma), grad)
@@ -82,7 +82,7 @@ def heavy_ball_griewank(x0, alpha=0.01, beta=0.9, epsilon=1e-5, n_iter=1000, deb
     x_vals = []
     obj_vals = []
     grad_vals = []
-    
+
     n = len(x0)
     x_curr = x0
     x_prev = x0
@@ -92,13 +92,13 @@ def heavy_ball_griewank(x0, alpha=0.01, beta=0.9, epsilon=1e-5, n_iter=1000, deb
 	        print("Iteration: ", i)
 	        print(x_curr, griewank(x_curr, gamma))
 	        print("------------------------")
-        
+
         grad = grad_griewank(x_curr, gamma)
-        
+
         x_vals.append(x_curr)
         obj_vals.append(griewank(x_curr, gamma))
         grad_vals.append(grad)
-        
+
         if grad_is_approx_zero(grad, epsilon):
             if debug:
                 print("Solution found!", x_curr, griewank(x_curr, gamma))
@@ -183,13 +183,13 @@ def save_results(df, filename, hist=True):
 df = run_griewank_test('steepest_descent', gamma=500, n_iter=1000, alpha=0.01, beta=0.99, use_ebls=False)
 save_results(df, 'steepest_descent_without_ebls')
 df = run_griewank_test('steepest_descent', gamma=500, n_iter=1000, alpha=0.01, beta=0.99, use_ebls=True)
-save_results('steepest_descent_with_ebls')
+save_results(df, 'steepest_descent_with_ebls')
 df = run_griewank_test('heavy_ball', gamma=500, n_iter=1000, alpha=0.01, beta=0.99, use_ebls=False)
-save_results('heavy_ball_without_ebls')
+save_results(df, 'heavy_ball_without_ebls')
 df = run_griewank_test('steepest_descent', gamma=500, n_iter=1000, alpha=0.01, beta=0.99, use_ebls=True)
-save_results('heavy_ball_with_ebls', False)
+save_results(df, 'heavy_ball_with_ebls', False)
 
-df = pd.DataFrame({'experiment': experiment, 'mean_f_opt': mean_f_opt, 'mean_dist_to_origin': 'mean_dist_to_origin',
+df = pd.DataFrame({'experiment': experiment, 'mean_f_opt': mean_f_opt, 'mean_dist_to_origin': mean_dist_to_origin,
 					'max_iter': n_iter, 'gamma': gamma, 'alpha': alpha, 'beta': beta})
 df.to_csv("aggregated_results.csv")
 print df.head()
