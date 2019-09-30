@@ -1,0 +1,5 @@
+,alpha,beta,experiment,gamma,max_iter,mean_dist_to_origin,mean_f_opt
+0,0.01,0.99,steepest_descent_without_ebls,500,1000,15.2236200073,0.533347731632
+1,0.01,0.99,steepest_descent_with_ebls,500,1000,15.1136969012,0.52990146961
+2,0.01,0.99,heavy_ball_without_ebls,500,1000,15.0781646169,0.525075486029
+3,0.01,0.99,heavy_ball_with_ebls,500,1000,15.1124235585,0.532324639829

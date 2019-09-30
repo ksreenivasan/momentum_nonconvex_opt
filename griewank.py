@@ -2,6 +2,7 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import datetime
 plt.style.use('seaborn-white')
 
 x_min = -20
@@ -143,7 +144,7 @@ def ebls(x_0, c1=0.1, c2=0.3, epsilon=1e-5, n_iter=1000, debug=False, gamma=4000
 
 def run_griewank_test(algo='steepest_descent', gamma=4000, n_iter=1000, alpha=0.01, beta=0.9, use_ebls=True):
     results = {'x_opt': [], 'iterations': [], 'f_opt': [], 'x_0': []}
-    print "Running test."
+    print "Running test.", datetime.datetime.now()
     for i in range(n_iter):
         # print("Random Restart: {}".format(i))
         x_0 = np.random.uniform(low=x_min, high=x_max, size=2)
@@ -173,20 +174,22 @@ alpha = [0.01, 0.01, 0.01, 0.01]
 beta = [0.99, 0.99, 0.99, 0.99]
 
 def save_results(df, filename, hist=True):
-	df.to_csv(filename + ".csv")
-	mean_f_opt.append(df.f_opt.mean())
-	mean_dist_to_origin.append(df.dist_to_origin.mean())
-	if hist:
-		df.dist_to_origin.hist()
-		plt.savefig(filename + ".pdf")
+    df.to_csv(filename + ".csv")
+    mean_f_opt.append(df.f_opt.mean())
+    mean_dist_to_origin.append(df.dist_to_origin.mean())
+    if hist:
+        ax = df.dist_to_origin.hist()
+        fig = ax.get_figure()
+        fig.savefig(filename + ".pdf")
+        fig.clear()
 
-df = run_griewank_test('steepest_descent', gamma=500, n_iter=1000, alpha=0.01, beta=0.99, use_ebls=False)
+df = run_griewank_test('steepest_descent', gamma=500, n_iter=10000, alpha=0.01, beta=0.99, use_ebls=False)
 save_results(df, 'steepest_descent_without_ebls')
-df = run_griewank_test('steepest_descent', gamma=500, n_iter=1000, alpha=0.01, beta=0.99, use_ebls=True)
+df = run_griewank_test('steepest_descent', gamma=500, n_iter=10000, alpha=0.01, beta=0.99, use_ebls=True)
 save_results(df, 'steepest_descent_with_ebls')
-df = run_griewank_test('heavy_ball', gamma=500, n_iter=1000, alpha=0.01, beta=0.99, use_ebls=False)
+df = run_griewank_test('heavy_ball', gamma=500, n_iter=10000, alpha=0.01, beta=0.99, use_ebls=False)
 save_results(df, 'heavy_ball_without_ebls')
-df = run_griewank_test('steepest_descent', gamma=500, n_iter=1000, alpha=0.01, beta=0.99, use_ebls=True)
+df = run_griewank_test('steepest_descent', gamma=500, n_iter=10000, alpha=0.01, beta=0.99, use_ebls=True)
 save_results(df, 'heavy_ball_with_ebls', False)
 
 df = pd.DataFrame({'experiment': experiment, 'mean_f_opt': mean_f_opt, 'mean_dist_to_origin': mean_dist_to_origin,

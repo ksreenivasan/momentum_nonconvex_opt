@@ -1,0 +1,19 @@
+Running test. 2019-09-29 12:05:39.558272
+Test complete.
+Running test. 2019-09-29 12:22:53.326578
+Test complete.
+Running test. 2019-09-29 13:19:34.923773
+Test complete.
+Running test. 2019-09-29 13:28:46.036703
+Test complete.
+   alpha  beta                     experiment  gamma  max_iter  \
+0   0.01  0.99  steepest_descent_without_ebls    500      1000
+1   0.01  0.99     steepest_descent_with_ebls    500      1000
+2   0.01  0.99        heavy_ball_without_ebls    500      1000
+3   0.01  0.99           heavy_ball_with_ebls    500      1000
+
+   mean_dist_to_origin  mean_f_opt
+0            15.223620    0.533348
+1            15.113697    0.529901
+2            15.078165    0.525075
+3            15.112424    0.532325
