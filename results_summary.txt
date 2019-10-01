@@ -22,7 +22,7 @@ Test complete.
 3            15.112424    0.532325
 
 ---------------------------------------------------------------------------------------------
-alpha = 1 (L was empirically ound to be 1)
+alpha = 1 (L was empirically found to be 1)
 ---------------------------------------------------------------------------------------------
 Running test. 2019-09-30 22:32:40.986923
 Test complete.
@@ -37,3 +37,13 @@ Test complete.
 1      1  0.99     steepest_descent_with_ebls    500      1000            15.279890    0.537668
 2      1  0.99        heavy_ball_without_ebls    500      1000            13.746990    0.453192
 3      1  0.99           heavy_ball_with_ebls    500      1000            15.178179    0.532440
+
+
+---------------------------------------------------------------------------------------------
+alpha = 1 (L was empirically found to be 1) - Retry
+---------------------------------------------------------------------------------------------
+   alpha  beta                     experiment  gamma  max_iter  mean_dist_to_origin  mean_f_opt
+0      1  0.99  steepest_descent_without_ebls    500      1000            15.248309    0.536205
+1      1  0.99     steepest_descent_with_ebls    500      1000            15.205943    0.533243
+2      1  0.99        heavy_ball_without_ebls    500      1000            13.697540    0.451688
+3      1  0.99           heavy_ball_with_ebls    500      1000            15.114745    0.527541
