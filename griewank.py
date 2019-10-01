@@ -170,7 +170,7 @@ mean_dist_to_origin = []
 experiment = ['steepest_descent_without_ebls', 'steepest_descent_with_ebls', 'heavy_ball_without_ebls', 'heavy_ball_with_ebls']
 n_iter = [1000, 1000, 1000, 1000]
 gamma = [500, 500, 500, 500]
-alpha = [0.01, 0.01, 0.01, 0.01]
+alpha = [1, 1, 1, 1]
 beta = [0.99, 0.99, 0.99, 0.99]
 
 def save_results(df, filename, hist=True):
@@ -183,13 +183,13 @@ def save_results(df, filename, hist=True):
         fig.savefig(filename + ".pdf")
         fig.clear()
 
-df = run_griewank_test('steepest_descent', gamma=500, n_iter=10000, alpha=0.01, beta=0.99, use_ebls=False)
+df = run_griewank_test('steepest_descent', gamma=500, n_iter=10000, alpha=1, beta=0.99, use_ebls=False)
 save_results(df, 'steepest_descent_without_ebls')
-df = run_griewank_test('steepest_descent', gamma=500, n_iter=10000, alpha=0.01, beta=0.99, use_ebls=True)
+df = run_griewank_test('steepest_descent', gamma=500, n_iter=10000, alpha=1, beta=0.99, use_ebls=True)
 save_results(df, 'steepest_descent_with_ebls')
-df = run_griewank_test('heavy_ball', gamma=500, n_iter=10000, alpha=0.01, beta=0.99, use_ebls=False)
+df = run_griewank_test('heavy_ball', gamma=500, n_iter=10000, alpha=1, beta=0.99, use_ebls=False)
 save_results(df, 'heavy_ball_without_ebls')
-df = run_griewank_test('steepest_descent', gamma=500, n_iter=10000, alpha=0.01, beta=0.99, use_ebls=True)
+df = run_griewank_test('steepest_descent', gamma=500, n_iter=10000, alpha=1, beta=0.99, use_ebls=True)
 save_results(df, 'heavy_ball_with_ebls', False)
 
 df = pd.DataFrame({'experiment': experiment, 'mean_f_opt': mean_f_opt, 'mean_dist_to_origin': mean_dist_to_origin,
