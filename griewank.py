@@ -40,6 +40,14 @@ def grad_griewank(x, gamma=4000):
     return np.array(grad)
 
 
+def hessian_griewank(x, gamma=4000):
+    hessian = np.zeros([2, 2])
+    hessian[0][0] = 2.0/gamma + np.cos(x[1]/np.sqrt(2))*np.cos(x[0])
+    hessian[0][1] = hessian[1][0] = (-1/np.sqrt(2))*np.sin(x[0])*np.sin(x[1]/np.sqrt(2))
+    hessian[1][1] = (2.0/gamma) + 0.5*np.cos(x[0])*np.cos(x[1]/np.sqrt(2))
+    return hessian
+
+
 def grad_is_approx_zero(grad, epsilon=1e-5):
     for grad_val in grad:
         if abs(grad_val) > epsilon:
@@ -173,26 +181,49 @@ gamma = [500, 500, 500, 500]
 alpha = [1, 1, 1, 1]
 beta = [0.99, 0.99, 0.99, 0.99]
 
-def save_results(df, filename, hist=True):
-    df.to_csv(filename + ".csv")
+
+def save_figure(ax, filename):
+    fig = ax.get_figure()
+    fig.savefig(filename)
+    fig.clear()
+
+def save_results(df, f_opt_df, dist_to_origin_df, filename, hist=True):
+    df.to_csv(filename + '.csv')
     mean_f_opt.append(df.f_opt.mean())
     mean_dist_to_origin.append(df.dist_to_origin.mean())
     if hist:
+        f_opt_df[filename + '_f_opt'] = df['f_opt']
+        dist_to_origin_df[filename + '_d'] = df['dist_to_origin']
+
         ax = df.dist_to_origin.hist()
         fig = ax.get_figure()
         fig.savefig(filename + ".pdf")
         fig.clear()
 
+def plot_aggregates(f_opt_df, dist_to_origin_df):
+    filenames = ['f_opt_aggregated.pdf', 'dist_to_origin_aggregated.pdf']
+    for i, df in enumerate([f_opt_df, dist_to_origin_df]):
+        ax = df.plot.hist(alpha=0.5)
+        save_figure(ax, 'hist_' + filenames[i])
+        ax = df.plot.box()
+        save_figure(ax, 'box_' + filenames[i])
+
+
+f_opt_df = pd.DataFrame()
+dist_to_origin_df = pd.DataFrame()
 df = run_griewank_test('steepest_descent', gamma=500, n_iter=10000, alpha=1, beta=0.99, use_ebls=False)
-save_results(df, 'steepest_descent_without_ebls')
+save_results(df, f_opt_df, dist_to_origin_df, 'sdesc')
 df = run_griewank_test('steepest_descent', gamma=500, n_iter=10000, alpha=1, beta=0.99, use_ebls=True)
-save_results(df, 'steepest_descent_with_ebls')
+save_results(df, f_opt_df, dist_to_origin_df, 'sdesc_ebls')
 df = run_griewank_test('heavy_ball', gamma=500, n_iter=10000, alpha=1, beta=0.99, use_ebls=False)
-save_results(df, 'heavy_ball_without_ebls')
-df = run_griewank_test('steepest_descent', gamma=500, n_iter=10000, alpha=1, beta=0.99, use_ebls=True)
-save_results(df, 'heavy_ball_with_ebls', False)
+save_results(df, f_opt_df, dist_to_origin_df, 'hball')
+df = run_griewank_test('heavy_ball', gamma=500, n_iter=10000, alpha=1, beta=0.99, use_ebls=True)
+save_results(df, f_opt_df, dist_to_origin_df, 'hball_ebls', False)
 
 df = pd.DataFrame({'experiment': experiment, 'mean_f_opt': mean_f_opt, 'mean_dist_to_origin': mean_dist_to_origin,
 					'max_iter': n_iter, 'gamma': gamma, 'alpha': alpha, 'beta': beta})
 df.to_csv("aggregated_results.csv")
+plot_aggregates(f_opt_df, dist_to_origin_df)
+
+
 print df.head()
