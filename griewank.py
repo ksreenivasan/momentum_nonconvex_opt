@@ -185,11 +185,11 @@ mean_f_opt = []
 mean_dist_to_origin = []
 mean_dist_from_start = []
 mean_start_distance = []
-experiment = []
+experiment_list = []
 n_iter_list = []
 gamma_list = []
 alpha_list = []
-beta_list = [0]
+beta_list = []
 
 
 def save_figure(ax, filename):
@@ -248,12 +248,14 @@ def driver(n_iter=100, gamma=500, alpha=1, beta=0.99):
 def beta_grid_search(n_iter=100, beta_values=None, gamma=500, alpha=1):
     beta_values = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.85, 0.87, 0.89, 0.90, 0.91,
             0.92, 0.93, 0.94, 0.95, 0.96, 0.97, 0.98, 0.99, 0.999]
-    results_dict = {'beta': [], 'dist_from_start': [], 'dist_to_origin': [], 'f_opt': []}
+    results_dict = {'beta': [], 'dist_from_start': [], 'dist_to_origin': [], 'f_opt': [], 'start_distance': []}
     for beta in beta_values:
+        print "beta:", beta
         df = run_griewank_test('heavy_ball', gamma=gamma, n_iter=n_iter, alpha=alpha, beta=beta, use_ebls=False)
         results_dict['beta'].append(beta)
         results_dict['dist_from_start'].append(df.dist_from_start.mean())
         results_dict['dist_to_origin'].append(df.dist_to_origin.mean())
         results_dict['f_opt'].append(df.f_opt.mean())
+        results_dict['start_distance'].append(df.start_distance.mean())
     return pd.DataFrame(results_dict)
 
