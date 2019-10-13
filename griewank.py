@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import datetime
+import math
 plt.style.use('seaborn-white')
 
 x_min = -20
@@ -87,7 +88,7 @@ def steepest_descent_griewank(x0, alpha=0.01, epsilon=1e-5, n_iter=10000, debug=
     return x_curr, griewank(x_curr, gamma), results_df
 
 
-def heavy_ball_griewank(x0, alpha=0.01, beta=0.9, epsilon=1e-5, n_iter=1000, debug=False, gamma=4000, use_ebls=True):
+def heavy_ball_griewank(x0, alpha=0.01, beta=0.9, epsilon=1e-5, n_iter=10000, debug=False, gamma=4000, use_ebls=True):
     x_vals = []
     obj_vals = []
     grad_vals = []
@@ -160,9 +161,11 @@ def run_griewank_test(algo='steepest_descent', gamma=4000, n_iter=1000, alpha=0.
         	x_opt, f_opt, results_df = steepest_descent_griewank(x_0, alpha=alpha, gamma=gamma, use_ebls=use_ebls)
         elif algo == 'heavy_ball':
         	x_opt, f_opt, results_df = heavy_ball_griewank(x_0, alpha=alpha, beta=beta, gamma=gamma, use_ebls=use_ebls)
+        elif algo == 'nesterov':
+            x_opt, f_opt, results_df = nesterov_griewank(x_0, alpha=alpha, beta=beta, gamma=gamma)
         else:
         	print "No such algorithm bro. The dude abides."
-        	exit()
+        	return -1
         results['x_opt'].append(x_opt)
         results['iterations'].append(results_df.shape[0])
         results['f_opt'].append(f_opt)
@@ -185,6 +188,7 @@ mean_f_opt = []
 mean_dist_to_origin = []
 mean_dist_from_start = []
 mean_start_distance = []
+mean_iter_to_convergence = []
 experiment_list = []
 n_iter_list = []
 gamma_list = []
@@ -203,6 +207,7 @@ def save_results(df, f_opt_df, dist_to_origin_df, dist_from_start_df, filename, 
     mean_dist_to_origin.append(df.dist_to_origin.mean())
     mean_dist_from_start.append(df.dist_from_start.mean())
     mean_start_distance.append(df.start_distance.mean())
+    mean_iter_to_convergence.append(df.iterations.mean())
     if hist:
         f_opt_df[filename + '_f_opt'] = df['f_opt']
         dist_to_origin_df[filename + '_d'] = df['dist_to_origin']
@@ -234,10 +239,13 @@ def driver(n_iter=100, gamma=500, alpha=1, beta=0.99):
     save_results(df, f_opt_df, dist_to_origin_df, dist_from_start_df, 'hball')
     # df = run_griewank_test('heavy_ball', gamma=gamma, n_iter=n_iter, alpha=alpha, beta=beta, use_ebls=True)
     # save_results(df, f_opt_df, dist_to_origin_df, dist_from_start_df, 'hball_ebls', False)
+    df = run_griewank_test('nesterov', gamma=gamma, n_iter=n_iter, alpha=alpha, beta=beta, use_ebls=False)
+    save_results(df, f_opt_df, dist_to_origin_df, dist_from_start_df, 'nesterov')
 
     df = pd.DataFrame({'experiment': experiment_list, 'mean_f_opt': mean_f_opt, 'mean_dist_to_origin': mean_dist_to_origin,
     					'mean_dist_from_start': mean_dist_from_start, 'mean_start_distance': mean_start_distance,
-                        'max_iter': n_iter_list, 'gamma': gamma_list, 'alpha': alpha_list, 'beta': beta_list})
+                        'mean_iter_to_convergence': mean_iter_to_convergence, 'max_iter': n_iter_list,
+                        'gamma': gamma_list, 'alpha': alpha_list, 'beta': beta_list})
     df.to_csv("aggregated_results.csv")
     plot_aggregates(f_opt_df, dist_to_origin_df, dist_from_start_df)
 
@@ -259,3 +267,48 @@ def beta_grid_search(n_iter=100, beta_values=None, gamma=500, alpha=1):
         results_dict['start_distance'].append(df.start_distance.mean())
     return pd.DataFrame(results_dict)
 
+
+def get_rho_k(rho_k_minus_1 = 0):
+    a = -1.0
+    b = (rho_k_minus_1**2 - 1)
+    c = 1.0
+    rho_k = (-b - math.sqrt(b**2 - 4*a*c))/2*a
+    return rho_k
+
+
+def nesterov_griewank(x0, alpha=1, beta=0.98, epsilon=1e-5, n_iter=1000, debug=False, gamma=500, use_ebls=False, rho=0):
+    x_vals = []
+    obj_vals = []
+    grad_vals = []
+
+    n = len(x0)
+    x_curr = x0
+    x_prev = x0
+    rho_prev = rho
+    for i in range(n_iter):
+        if debug:
+            print("------------------------")
+            print("Iteration: ", i)
+            print(x_curr, griewank(x_curr, gamma))
+            print("------------------------")
+        
+        rho_curr = get_rho_k(rho_prev)
+        beta = rho_curr*(rho_prev**2)
+        rho_prev = rho_curr
+        
+        y_curr = x_curr + beta*(x_curr - x_prev)
+        grad = grad_griewank(y_curr, gamma)
+
+        x_vals.append(x_curr)
+        obj_vals.append(griewank(x_curr, gamma))
+        grad_vals.append(grad)
+
+        if grad_is_approx_zero(grad, epsilon):
+            if debug:
+                print("Solution found!", x_curr, griewank(x_curr, gamma))
+            break
+        x_next = y_curr - alpha*grad
+        x_prev = x_curr
+        x_curr = x_next
+    results_df = pd.DataFrame({'x': x_vals, 'obj': obj_vals, 'grad': grad_vals})
+    return x_curr, griewank(x_curr, gamma), results_df
