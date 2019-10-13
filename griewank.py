@@ -151,7 +151,7 @@ def ebls(x_0, c1=0.1, c2=0.3, epsilon=1e-5, n_iter=1000, debug=False, gamma=4000
 
 
 def run_griewank_test(algo='steepest_descent', gamma=4000, n_iter=1000, alpha=0.01, beta=0.9, use_ebls=True):
-    results = {'x_opt': [], 'iterations': [], 'f_opt': [], 'x_0': []}
+    results = {'x_opt': [], 'iterations': [], 'f_opt': [], 'x_0': [], 'dist_from_start': []}
     print "Running test.", datetime.datetime.now()
     for i in range(n_iter):
         # print("Random Restart: {}".format(i))
@@ -167,6 +167,7 @@ def run_griewank_test(algo='steepest_descent', gamma=4000, n_iter=1000, alpha=0.
         results['iterations'].append(results_df.shape[0])
         results['f_opt'].append(f_opt)
         results['x_0'].append(x_0)
+        results['dist_from_start'].append(np.linalg.norm(x_opt - x_0))
     results_df = pd.DataFrame(results)
     results_df['dist_to_origin'] = results_df.apply(lambda row: np.linalg.norm(row['x_opt']), axis=1)
     print "Test complete."
@@ -175,6 +176,7 @@ def run_griewank_test(algo='steepest_descent', gamma=4000, n_iter=1000, alpha=0.
 
 mean_f_opt = []
 mean_dist_to_origin = []
+mean_dist_from_start = []
 experiment = ['steepest_descent_without_ebls', 'steepest_descent_with_ebls', 'heavy_ball_without_ebls', 'heavy_ball_with_ebls']
 n_iter = [1000, 1000, 1000, 1000]
 gamma = [500, 500, 500, 500]
@@ -191,16 +193,18 @@ def save_results(df, f_opt_df, dist_to_origin_df, filename, hist=True):
     df.to_csv(filename + '.csv')
     mean_f_opt.append(df.f_opt.mean())
     mean_dist_to_origin.append(df.dist_to_origin.mean())
+    mean_dist_from_start.append(df.dist_from_start.mean())
     if hist:
         f_opt_df[filename + '_f_opt'] = df['f_opt']
         dist_to_origin_df[filename + '_d'] = df['dist_to_origin']
+        dist_from_start_df[filename + '_d'] = df['dist_from_start']
 
         ax = df.dist_to_origin.hist()
         fig = ax.get_figure()
         fig.savefig(filename + ".pdf")
         fig.clear()
 
-def plot_aggregates(f_opt_df, dist_to_origin_df):
+def plot_aggregates(f_opt_df, dist_to_origin_df, dist_from_start_df):
     filenames = ['f_opt_aggregated.pdf', 'dist_to_origin_aggregated.pdf']
     for i, df in enumerate([f_opt_df, dist_to_origin_df]):
         ax = df.plot.hist(alpha=0.5)
@@ -209,21 +213,38 @@ def plot_aggregates(f_opt_df, dist_to_origin_df):
         save_figure(ax, 'box_' + filenames[i])
 
 
-f_opt_df = pd.DataFrame()
-dist_to_origin_df = pd.DataFrame()
-df = run_griewank_test('steepest_descent', gamma=500, n_iter=10000, alpha=1, beta=0.99, use_ebls=False)
-save_results(df, f_opt_df, dist_to_origin_df, 'sdesc')
-df = run_griewank_test('steepest_descent', gamma=500, n_iter=10000, alpha=1, beta=0.99, use_ebls=True)
-save_results(df, f_opt_df, dist_to_origin_df, 'sdesc_ebls')
-df = run_griewank_test('heavy_ball', gamma=500, n_iter=10000, alpha=1, beta=0.99, use_ebls=False)
-save_results(df, f_opt_df, dist_to_origin_df, 'hball')
-df = run_griewank_test('heavy_ball', gamma=500, n_iter=10000, alpha=1, beta=0.99, use_ebls=True)
-save_results(df, f_opt_df, dist_to_origin_df, 'hball_ebls', False)
+def driver(n_iter=100, gamma=500, alpha=1, beta=0.99):
+    f_opt_df = pd.DataFrame()
+    dist_to_origin_df = pd.DataFrame()
+    dist_from_start_df = pd.DataFrame()
+    df = run_griewank_test('steepest_descent', gamma=gamma, n_iter=n_iter, alpha=alpha, beta=beta, use_ebls=False)
+    save_results(df, f_opt_df, dist_to_origin_df, 'sdesc')
+    df = run_griewank_test('steepest_descent', gamma=gamma, n_iter=n_iter, alpha=alpha, beta=beta, use_ebls=True)
+    save_results(df, f_opt_df, dist_to_origin_df, 'sdesc_ebls')
+    df = run_griewank_test('heavy_ball', gamma=gamma, n_iter=n_iter, alpha=alpha, beta=beta, use_ebls=False)
+    save_results(df, f_opt_df, dist_to_origin_df, 'hball')
+    # df = run_griewank_test('heavy_ball', gamma=gamma, n_iter=n_iter, alpha=alpha, beta=beta, use_ebls=True)
+    # save_results(df, f_opt_df, dist_to_origin_df, 'hball_ebls', False)
 
-df = pd.DataFrame({'experiment': experiment, 'mean_f_opt': mean_f_opt, 'mean_dist_to_origin': mean_dist_to_origin,
-					'max_iter': n_iter, 'gamma': gamma, 'alpha': alpha, 'beta': beta})
-df.to_csv("aggregated_results.csv")
-plot_aggregates(f_opt_df, dist_to_origin_df)
+    df = pd.DataFrame({'experiment': experiment, 'mean_f_opt': mean_f_opt, 'mean_dist_to_origin': mean_dist_to_origin,
+    					'mean_dist_from_start': mean_dist_from_start, 'max_iter': n_iter, 'gamma': gamma,
+                        'alpha': alpha, 'beta': beta})
+    df.to_csv("aggregated_results.csv")
+    plot_aggregates(f_opt_df, dist_to_origin_df, dist_from_start_df)
+
+    return df
+
+def beta_grid_search(n_iter=100, beta_values=None, gamma=500, alpha=1):
+    beta_values = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.85, 0.87, 0.89, 0.90, 0.91,
+            0.92, 0.93, 0.94, 0.95, 0.96, 0.97, 0.98, 0.99, 0.999]
+    results_dict = {'beta': [], 'dist_from_start': [], 'dist_to_origin': [], 'f_opt': []}
+    for beta in beta_values:
+        df = run_griewank_test('heavy_ball', gamma=gamma, n_iter=n_iter, alpha=alpha, beta=beta, use_ebls=False)
+        results_dict['beta'].append(beta)
+        results_dict['dist_from_start'].append(df.dist_from_start.mean())
+        results_dict['dist_to_origin'].append(df.dist_to_origin.mean())
+        results_dict['f_opt'].append(df.f_opt.mean())
+    return pd.DataFrame(results_dict)
 
 
-print df.head()
+
