@@ -2,7 +2,7 @@
 import numpy as np
 import pandas as pd
 import matplotlib
-# matplotlib.use('pdf')
+matplotlib.use('pdf')
 import matplotlib.pyplot as plt
 import datetime
 import math
@@ -189,11 +189,11 @@ def nesterov_griewank(x0, alpha=1, beta=0.98, epsilon=1e-5, n_iter=1000, debug=F
             print("Iteration: ", i)
             print(x_curr, griewank(x_curr, gamma))
             print("------------------------")
-        
+
         rho_curr = get_rho_k(rho_prev)
         beta = rho_curr*(rho_prev**2)
         rho_prev = rho_curr
-        
+
         y_curr = x_curr + beta*(x_curr - x_prev)
         grad = grad_griewank(y_curr, gamma)
 
@@ -237,7 +237,7 @@ def run_griewank_test(algo='steepest_descent', gamma=4000, n_iter=1000, alpha=0.
     results_df['dist_to_origin'] = results_df.apply(lambda row: np.linalg.norm(row['x_opt']), axis=1)
     n_iter_list.append(n_iter)
     gamma_list.append(gamma)
-    exp = algo + "_with_ebls" if use_ebls else algo + "_without_ebls" 
+    exp = algo + "_with_ebls" if use_ebls else algo + "_without_ebls"
     experiment_list.append(exp)
     alpha_list.append(alpha)
     beta_list.append(beta)
@@ -321,7 +321,7 @@ def beta_grid_search(n_iter=100, beta_values=None, gamma=500, alpha=1):
     return pd.DataFrame(results_dict)
 
 
-def compare_descent_algorithms(gamma=4000, n_iter=1000, max_iter=10000, alpha=1, beta=0.98):
+def compare_descent_algorithms(gamma=500, n_iter=1000, max_iter=10000, alpha=1, beta=0.98):
     def save_results(results_list, x_0, x_opt, f_opt, iter_to_convergence):
         results_list['dist_from_start'].append(np.linalg.norm(x_opt - x_0))
         results_list['dist_to_origin'].append(np.linalg.norm(x_opt))
@@ -340,16 +340,16 @@ def compare_descent_algorithms(gamma=4000, n_iter=1000, max_iter=10000, alpha=1,
             print("Random Restart: {}".format(i))
         x_0 = np.random.uniform(low=x_min, high=x_max, size=2)
         start_distance.append(np.linalg.norm(x_0))
-        
+
         x_opt, f_opt, results_df = steepest_descent_griewank(x_0, alpha=alpha, gamma=gamma, use_ebls=False)
         save_results(sd_results, x_0, x_opt, f_opt, results_df.shape[0])
 
         x_opt, f_opt, results_df = steepest_descent_griewank(x_0, alpha=alpha, gamma=gamma, use_ebls=True)
         save_results(sd_ebls_results, x_0, x_opt, f_opt, results_df.shape[0])
-        
+
         x_opt, f_opt, results_df = heavy_ball_griewank(x_0, alpha=alpha, beta=beta, gamma=gamma, use_ebls=False)
         save_results(hball_results, x_0, x_opt, f_opt, results_df.shape[0])
-        
+
         x_opt, f_opt, results_df = nesterov_griewank(x_0, alpha=alpha, beta=beta, gamma=gamma, use_ebls=False)
         save_results(nesterov_results, x_0, x_opt, f_opt, results_df.shape[0])
 
@@ -380,5 +380,7 @@ def compare_descent_algorithms(gamma=4000, n_iter=1000, max_iter=10000, alpha=1,
 
     aggregated_results_df = pd.DataFrame(aggregated_results_df)
     print aggregated_results_df
+
+    aggregated_results_df.to_csv("aggregated_results_{}.csv".format(datetime.datetime.now().strftime('%d_%m_%Y')))
     return aggregated_results_df
 
