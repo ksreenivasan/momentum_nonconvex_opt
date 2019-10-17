@@ -96,7 +96,7 @@ def steepest_descent_griewank(x0, alpha=0.01, epsilon=1e-5, n_iter=10000, debug=
                 print("Solution found!", x_curr, griewank(x_curr, gamma), grad)
             break
         if use_ebls:
-            alpha = ebls(x_curr)
+            alpha = ebls(x_curr, gamma=gamma)
         x_next = x_curr - alpha*grad
         x_curr = x_next
     results_df = pd.DataFrame({'x': x_vals, 'obj': obj_vals, 'grad': grad_vals})
@@ -129,7 +129,7 @@ def heavy_ball_griewank(x0, alpha=0.01, beta=0.9, epsilon=1e-5, n_iter=10000, de
                 print("Solution found!", x_curr, griewank(x_curr, gamma))
             break
         if use_ebls:
-            alpha = ebls(x_curr)
+            alpha = ebls(x_curr, gamma=gamma)
         x_next = x_curr - alpha*grad + beta*(x_curr - x_prev)
         if debug:
             print("Momentum!", x_curr-x_prev)
@@ -139,7 +139,7 @@ def heavy_ball_griewank(x0, alpha=0.01, beta=0.9, epsilon=1e-5, n_iter=10000, de
     return x_curr, griewank(x_curr, gamma), results_df
 
 
-def ebls(x_0, c1=0.1, c2=0.3, epsilon=1e-5, n_iter=1000, debug=False, gamma=4000):
+def ebls_old(x_0, c1=0.1, c2=0.3, epsilon=1e-5, n_iter=1000, debug=False, gamma=4000):
     L = 0.0
     U = 1e100 # infinity
     alpha = 1
@@ -152,7 +152,7 @@ def ebls(x_0, c1=0.1, c2=0.3, epsilon=1e-5, n_iter=1000, debug=False, gamma=4000
         d = -1 * grad_curr
         grad_next = grad_griewank(x_curr + alpha*d, gamma)
         f_next = griewank(x_curr + alpha*d, gamma)
-        f_curr = griewank(x_curr)
+        f_curr = griewank(x_curr, gamma)
         if f_next > (f_curr + c1*alpha*np.matmul(grad_curr.T, d)):
             U = alpha
             alpha = (U + L)/2.0
@@ -164,6 +164,35 @@ def ebls(x_0, c1=0.1, c2=0.3, epsilon=1e-5, n_iter=1000, debug=False, gamma=4000
                 alpha = (L + U)/2.0
         else:
             return alpha
+
+def ebls(x, alpha_start=1, c1=0.1, c2=0.3, epsilon=1e-5, gamma=4000):
+    L = 0.0
+    U = 1e100 # infinity
+    alpha = alpha_start
+    x_curr = x
+    n_iter = 1
+    d = -grad_griewank(x_curr, gamma)
+    grad_curr = -1 * d
+    f_curr = griewank(x_curr, gamma)
+    while n_iter <= 25:
+        n_iter += 1
+        f_next = griewank(x_curr + alpha*d, gamma)
+        if f_next > (f_curr + c1*alpha*np.matmul(grad_curr.T, d)):
+            U = alpha
+            alpha = (U + L)/2.0
+        else:
+            grad_next = grad_griewank(x_curr + alpha*d, gamma)
+            if np.matmul(grad_next.T, d) < c2*(np.matmul(grad_curr.T, d)):
+                L = alpha
+                if U >= 1e100:
+                    alpha = 2*L
+                else:
+                    alpha = (L + U)/2.0
+            else:
+                break
+    x_next = x_curr + alpha*d
+    return alpha
+    # return [alpha, x_next, f_next, grad_next]
 
 
 def get_rho_k(rho_k_minus_1 = 0):
@@ -216,7 +245,7 @@ def run_griewank_test(algo='steepest_descent', gamma=4000, n_iter=1000, alpha=0.
     results = {'x_opt': [], 'iterations': [], 'f_opt': [], 'x_0': [], 'dist_from_start': [], 'start_distance': []}
     print "Running test.", datetime.datetime.now()
     for i in range(n_iter):
-        # print("Random Restart: {}".format(i))
+        print("Random Restart: {}".format(i))
         x_0 = np.random.uniform(low=x_min, high=x_max, size=2)
         if algo == 'steepest_descent':
             x_opt, f_opt, results_df = steepest_descent_griewank(x_0, alpha=alpha, gamma=gamma, use_ebls=use_ebls)
